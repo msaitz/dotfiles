@@ -36,7 +36,6 @@ alias hbi-sandbox="aws-vault exec hbi-sandbox --"
 alias hbi-prod="aws-vault exec hbi-prod --"
 alias hbi-billing="aws-vault exec hbi-billing --"
 alias hbi-audit="aws-vault exec hbi-audit --"
-alias hbi-audit="aws-vault exec hbi-audit --"
 
 ## password store
 pass() {
@@ -63,7 +62,6 @@ tfplan() {
   if [ -z "$1" ]; then 1=$(echo $filepath | cut -d'/' -f3); fi
   aws-vault exec hbi-$1 -- terraform plan --var-file $filepath -out /tmp/plan.out 
 }
-
 
 tfapply() { aws-vault exec hbi-$1 -- terraform apply /tmp/plan.out }
 
