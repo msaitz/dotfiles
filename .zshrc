@@ -1,10 +1,8 @@
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 export ZSH="/home/yan/.oh-my-zsh"
 export PATH="/home/yan/.tfenv/bin:$PATH"
 ZSH_THEME="robbyrussell-mod"
-plugins=(git pass)
+plugins=(git pass fd)
 
 source $ZSH/oh-my-zsh.sh
 source /usr/share/fzf/key-bindings.zsh 
@@ -15,7 +13,6 @@ export CLUTTER_BACKEND=wayland
 export XDG_CURRENT_DESKTOP=Unity
 export AWS_VAULT_KEYCHAIN_NAME=login
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse'
-
 
 HISTSIZE=1000000
 SAVEHIST=1000000
@@ -41,13 +38,12 @@ alias hbi-billing="aws-vault exec hbi-billing --"
 alias hbi-audit="aws-vault exec hbi-audit --"
 alias hbi-audit="aws-vault exec hbi-audit --"
 
+## password store
 pass() {
   if [ -z "$1" ] || [[ "$1" == "-c" ]]; then
-    pass_dir=~/.password-store/
+    pass_dir=$HOME/.password-store/
     dir_len=${#pass_dir}
-    selection=$(find $pass_dir -type f -not -path '*/\.git*' | 
-      cut -c "$((dir_len+1))"- |
-      sed -e 's/\(.*\)\.gpg/\1/' | fzf)
+    selection=$(fd 'gpg' . $pass_dir | cut -c "$((dir_len+1))"- | sed -e 's/\(.*\)\.gpg/\1/' | fzf)
     echo $selection
     /bin/pass $1 $selection
   else
@@ -55,6 +51,7 @@ pass() {
   fi
 }
 
+## Terraform
 tfinit() { 
   filepath=$(fd . '../' | awk "/$1/ && /backend.tfvars/" | fzf -1)
   if [ -z "$1" ]; then 1=$(echo $filepath | cut -d'/' -f3); fi
@@ -70,13 +67,13 @@ tfplan() {
 
 tfapply() { aws-vault exec hbi-$1 -- terraform apply /tmp/plan.out }
 
+## nmcli
 wifi() {
   if [ "$1" = "connect" ]; then
     nmcli d w c $2 $3
   else
     selection=$(nmcli --color yes d w l | fzf --ansi --inline-info --header-lines=1 --cycle | xargs) 
     [[ -z "$selection" ]] && return 0
-
     BSSID=$(echo $selection | cut -d' ' -f1) 
     SSID=$(echo $selection | cut -d' ' -f2) 
 
