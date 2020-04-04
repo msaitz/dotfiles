@@ -4,7 +4,7 @@
 include /etc/sway/config.d/*
 
 ### Startup stuff
-exec redshift
+#exec redshift
 exec guake
 exec ydotoold
 exec libinput-gestures-setup start
@@ -32,13 +32,12 @@ bindswitch --reload lid:on output $laptop disable
 bindswitch --reload lid:off output $laptop enable
 
 # Idle configuration
- exec swayidle -w \
-          timeout 400 'swaymsg "output * dpms off"' \
-               resume 'swaymsg "output * dpms on"' 
+exec swayidle -w \
+  timeout 400 'swaymsg "output * dpms off"' \
+  resume 'swaymsg "output * dpms on"' 
 
- exec swayidle -w \
-	  timeout 900 'systemctl suspend' \
-          before-sleep 'swaylock'
+exec swayidle -w \
+  timeout 900 '[ $(acpi -a | grep off-line | wc -l) -gt 0 ] && systemctl suspend' 
 
 # Input
    input "1267:12395:ELAN2301:00_04F3:306B_Touchpad" {
@@ -57,6 +56,7 @@ bindswitch --reload lid:off output $laptop enable
     bindsym $mod+Return exec $term
     bindsym $mod+q kill
     bindsym $mod+d exec $menu
+    bindsym $mod+Space exec $menu
     floating_modifier $mod normal
     bindsym $mod+Shift+c reload
     bindsym f1 exec /usr/bin/guake-toggle
@@ -71,6 +71,9 @@ bindswitch --reload lid:off output $laptop enable
 # Apps
     default_border pixel
     for_window [class="[Cc]hromium"] inhibit_idle fullscreen
+    for_window [class="slack"] floating enable
+    for_window [class="pavucontrol"] floating enable
+    for_window [class="Simplenote"] floating enable
     for_window [app_id="guake"] floating enable, border none, move position 0 0
     for_window [class="vlc"] floating enable, inhibit_idle open
     for_window [app_id="^launcher$"] floating enable, border none
@@ -140,12 +143,14 @@ bindswitch --reload lid:off output $laptop enable
     bindsym $mod+e layout toggle split
     bindsym $mod+f fullscreen
     bindsym $mod+Shift+space floating toggle
-    bindsym $mod+space focus mode_toggle
+    bindsym $mod+Alt+Space focus mode_toggle
     bindsym $mod+a focus parent
 
 # Scratchpad:
-    bindsym $mod+Shift+minus move scratchpad
-    bindsym $mod+minus scratchpad show
+    bindsym $mod+Shift+Tab move scratchpad
+    bindsym alt+Shift+Tab move scratchpad
+    bindsym $mod+Tab scratchpad show
+    bindsym alt+Tab scratchpad show
 
 # Resizing containers:
 mode "resize" {
