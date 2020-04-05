@@ -1,6 +1,6 @@
 
-export ZSH="/home/yan/.oh-my-zsh"
-export PATH="/home/yan/.tfenv/bin:$PATH"
+export ZSH="$HOME/.oh-my-zsh"
+export PATH="$HOME/.tfenv/bin:$PATH"
 ZSH_THEME="robbyrussell-mod"
 plugins=(git pass fd)
 
@@ -10,9 +10,10 @@ source /usr/share/fzf/completion.zsh
 
 #export GDK_BACKEND=wayland
 #export CLUTTER_BACKEND=wayland
-#export XDG_CURRENT_DESKTOP=Unity
+export XDG_CURRENT_DESKTOP=Unity
 #export AWS_VAULT_KEYCHAIN_NAME=login
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse'
+NOTES_PATH="$HOME/Documents/notes"
 
 HISTSIZE=1000000
 SAVEHIST=1000000
@@ -39,24 +40,28 @@ alias pbpaste="wl-paste"
 ## hbi stuff
 hbi() {
   args=($@)
+  [[ "$args[2]" == "kubectl" ]] && kubectx $1
   aws-vault exec hbi-$1 -- ${args[@]:1}
 }
 
 k9s() {
   [ -z "$1" ] && 1=$(printf "sandbox\ndev\nprod" | fzf)
+  [ -z "$1" ] && return 0
   [ "$(kubectx -c )" != $1 ] && kubectx $1
   hbi $1 "/usr/bin/k9s"
 }
 
-tfinit() { 
+tfinit() {
   filepath=$(_get_filepath $1 "backend.tfvars")
   [ -z "$1" ] && 1=$(echo $filepath | cut -d'/' -f3)
+  [ -z "$1" ] && return 0
   hbi $1 terraform init --reconfigure --backend-config $filepath
 }
 
-tfplan() { 
+tfplan() {
   filepath=$(_get_filepath $1 "terraform.tfvars")
   [ -z "$1" ] && 1=$(echo $filepath | cut -d'/' -f3)
+  [ -z "$1" ] && return 0
   hbi $1 terraform plan --var-file $filepath -out /tmp/plan.out
 }
 
@@ -68,7 +73,7 @@ _get_filepath() {
   echo $(fd . '../' | awk "/$1/ && /$2/" | fzf -1 -0)
 }
 
-## password store
+## passexpression store
 pass() {
   if [ "$#" -eq 0 ] || ([ "$#" -eq 1 ] && [[ "$1" == "-c" ]]); then
     pass_dir=$HOME/.password-store/
@@ -81,9 +86,32 @@ pass() {
   fi
 }
 
+## note taking
+notes() {
+  cd $NOTES_PATH
+  action=$EDITOR
+
+  if [[ "$1" == "view" ]]; then
+    action=mdless
+  elif [[ "$1" == "add" ]]; then
+    $action $2
+  else
+    expression=$1
+  fi
+
+  while true; do
+    if [ -z "$expression" ]; then
+      expression=$(ls -t | fzf --preview="cat {}" --preview-window=right:70%:wrap) || break
+    else
+      rg --files-with-matches --no-messages "$expression" * | fzf --preview "highlight -O ansi -l {} 2> /dev/null | rg --colors 'match:bg:yellow' --ignore-case --pretty --context 10 '$expression' || rg --ignore-case --pretty --context 10 '$expression' {}" || break
+    fi
+    $action $selection
+  done
+}
+
 ## nmcli
 wifi() {
-  if [ "$1" = "connect" ]; then
+  if [[ "$1" == "connect" ]]; then
     nmcli d w rescan && nmcli d w c $2 $3
   else
     selection=$(nmcli --color yes d w l | fzf --ansi --inline-info --header-lines=1 --cycle | xargs) 

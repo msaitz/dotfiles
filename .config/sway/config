@@ -24,7 +24,7 @@ set $leftmon DP-2
 set $rightmon DP-3 
 
 # Output configuration
-output * bg /usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png fill
+output * bg $HOME/Pictures/Wall.jpg fill
 output $laptop scale 1
 output $leftmon resolution 1920x1200 position 0,0
 output $rightmon resolution 1920x1200 position 1920,0
