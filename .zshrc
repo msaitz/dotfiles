@@ -88,8 +88,9 @@ pass() {
 
 ## note taking
 notes() {
-  cd $NOTES_PATH
+  current_dir=$(pwd)
   action=$EDITOR
+  cd $NOTES_PATH
 
   if [[ "$1" == "view" ]]; then
     action=mdless
@@ -101,12 +102,14 @@ notes() {
 
   while true; do
     if [ -z "$expression" ]; then
-      expression=$(ls -t | fzf --preview="cat {}" --preview-window=right:70%:wrap) || break
+      selection=$(ls -t | fzf --preview="cat {}" --preview-window=right:70%:wrap) || break
     else
-      rg --files-with-matches --no-messages "$expression" * | fzf --preview "highlight -O ansi -l {} 2> /dev/null | rg --colors 'match:bg:yellow' --ignore-case --pretty --context 10 '$expression' || rg --ignore-case --pretty --context 10 '$expression' {}" || break
+      selection=$(rg --files-with-matches --no-messages "$expression" * | fzf --preview "highlight -O ansi -l {} 2> /dev/null | rg --colors 'match:bg:yellow' --ignore-case --pretty --context 10 '$expression' || rg --ignore-case --pretty --context 10 '$expression' {}") || break
     fi
     $action $selection
   done
+
+  cd $current_dir
 }
 
 ## nmcli
