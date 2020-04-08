@@ -39,30 +39,35 @@ alias pbpaste="wl-paste"
 
 ## hbi stuff
 hbi() {
-  args=($@)
-  [[ "$args[2]" == "kubectl" ]] && kubectx $1
-  aws-vault exec hbi-$1 -- ${args[@]:1}
+  [ -z "$1" ] && echo "ENV not provided!" && return 1
+  local env=$1
+  local args=($@)
+  [[ "$2" == "kubectl" ]] && kubectx $env
+  aws-vault exec hbi-$env -- ${args[@]:1}
 }
 
 k9s() {
-  [ -z "$1" ] && 1=$(printf "sandbox\ndev\nprod" | fzf)
-  [ -z "$1" ] && return 0
-  [ "$(kubectx -c )" != $1 ] && kubectx $1
-  hbi $1 "/usr/bin/k9s"
+  local env=$1
+  [ -z "$env" ] && env=$(printf "sandbox\ndev\nprod" | fzf)
+  [ -z "$env" ] && return 0
+  [ "$(kubectx -c )" != $env ] && kubectx $env
+  hbi $env "/usr/bin/k9s"
 }
 
 tfinit() {
-  filepath=$(_get_filepath $1 "backend.tfvars")
-  [ -z "$1" ] && 1=$(echo $filepath | cut -d'/' -f3)
-  [ -z "$1" ] && return 0
-  hbi $1 terraform init --reconfigure --backend-config $filepath
+  local env=$1
+  filepath=$(_get_filepath $env "backend.tfvars")
+  [ -z "$env" ] && env=$(_extract_env $filepath)
+  [ -z "$env" ] && return 0
+  hbi $env terraform init --reconfigure --backend-config $filepath
 }
 
 tfplan() {
-  filepath=$(_get_filepath $1 "terraform.tfvars")
-  [ -z "$1" ] && 1=$(echo $filepath | cut -d'/' -f3)
-  [ -z "$1" ] && return 0
-  hbi $1 terraform plan --var-file $filepath -out /tmp/plan.out
+  local env=$1
+  filepath=$(_get_filepath $env "terraform.tfvars")
+  [ -z "$env" ] && env=$(_extract_env $filepath)
+  [ -z "$env" ] && return 0
+  hbi $env terraform plan --var-file $filepath -out /tmp/plan.out
 }
 
 tfapply() {
@@ -73,7 +78,11 @@ _get_filepath() {
   echo $(fd . '../' | awk "/$1/ && /$2/" | fzf -1 -0)
 }
 
-## passexpression store
+_extract_env() {
+  echo $1 | cut -d'/' -f3
+}
+
+## pass store
 pass() {
   if [ "$#" -eq 0 ] || ([ "$#" -eq 1 ] && [[ "$1" == "-c" ]]); then
     pass_dir=$HOME/.password-store/
@@ -88,19 +97,20 @@ pass() {
 
 ## note taking
 notes() {
-  current_dir=$(pwd)
-  action=$EDITOR
+  local current_dir=$(pwd)
+  local action=$EDITOR
   cd $NOTES_PATH
 
   if [[ "$1" == "view" ]]; then
-    action=mdless
+    action=mdr
   elif [[ "$1" == "add" ]]; then
     $action $2
   else
-    expression=$1
+    local expression=$1
   fi
 
   while true; do
+    local selection=""
     if [ -z "$expression" ]; then
       selection=$(ls -t | fzf --preview="cat {}" --preview-window=right:70%:wrap) || break
     else
@@ -115,12 +125,14 @@ notes() {
 ## nmcli
 wifi() {
   if [[ "$1" == "connect" ]]; then
-    nmcli d w rescan && nmcli d w c $2 $3
+    nmcli d w c $2 $3
+  elif [[ "$1" == "scan" ]]; then
+    nmcli d w rescan
   else
-    selection=$(nmcli --color yes d w l | fzf --ansi --inline-info --header-lines=1 --cycle | xargs) 
+    local selection=$(nmcli --color yes d w l | fzf --ansi --inline-info --header-lines=1 --cycle | xargs)
     [ -z "$selection" ] && return 0
-    BSSID=$(echo $selection | cut -d' ' -f1) 
-    SSID=$(echo $selection | cut -d' ' -f2) 
+    local BSSID=$(echo $selection | cut -d' ' -f1)
+    local SSID=$(echo $selection | cut -d' ' -f2)
 
     if [ "$(nmcli c | rg $SSID | wc -l)" -eq 0 ]; then
       nmcli -a d w c $BSSID 
