@@ -12,7 +12,9 @@ source /usr/share/fzf/completion.zsh
 #export CLUTTER_BACKEND=wayland
 export XDG_CURRENT_DESKTOP=Unity
 #export AWS_VAULT_KEYCHAIN_NAME=login
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse'
+export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --bind=ctrl-o:accept'
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+export BATPAGER="less -RF"
 NOTES_PATH="$HOME/Documents/notes"
 
 HISTSIZE=1000000
@@ -36,6 +38,8 @@ alias rm='rm -I --preserve-root'
 alias sudo="sudo "
 alias pbcopy="wl-copy"
 alias pbpaste="wl-paste"
+alias glow="glow -p"
+alias cat="bat"
 
 ## hbi stuff
 hbi() {
@@ -87,7 +91,7 @@ pass() {
   if [ "$#" -eq 0 ] || ([ "$#" -eq 1 ] && [[ "$1" == "-c" ]]); then
     pass_dir=$HOME/.password-store/
     dir_len=${#pass_dir}
-    selection=$(fd 'gpg' . $pass_dir | cut -c "$((dir_len+1))"- | sed -e 's/\(.*\)\.gpg/\1/' | fzf)
+    selection=$(fd 'gpg' $pass_dir | cut -c "$((dir_len+1))"- | sed -e 's/\(.*\)\.gpg/\1/' | fzf)
     [ -z "$selection" ] && return 0
     echo $selection && /bin/pass $1 $selection
   else
@@ -96,27 +100,35 @@ pass() {
 }
 
 ## note taking
-notes() {
+note() {
+  local preview_options="--preview-window=right:70%:wrap"
   local current_dir=$(pwd)
   local action=$EDITOR
+  local expression=""
   cd $NOTES_PATH
 
   if [[ "$1" == "view" ]]; then
-    action=mdr
+    action='glow'
+    [ -n "$2" ] && expression=$2 
   elif [[ "$1" == "add" ]]; then
     $action $2
   else
-    local expression=$1
+    expression=$1
   fi
 
   while true; do
-    local selection=""
+    local note=""
     if [ -z "$expression" ]; then
-      selection=$(ls -t | fzf --preview="cat {}" --preview-window=right:70%:wrap) || break
+      note=$(ls -t | fzf --preview="bat --color 'always' --decorations 'never' {}" $preview_options) || break
     else
-      selection=$(rg --files-with-matches --no-messages "$expression" * | fzf --preview "highlight -O ansi -l {} 2> /dev/null | rg --colors 'match:bg:yellow' --ignore-case --pretty --context 10 '$expression' || rg --ignore-case --pretty --context 10 '$expression' {}") || break
+      matches=$(rg --files-with-matches --no-messages --ignore-case "$expression" *)
+      if [ -z "$matches" ]; then
+        echo "No matches!" && break
+      else
+        note=$(echo $matches | fzf --preview "rg --ignore-case --pretty --context 10 $expression {}" $preview_options) || break
+      fi
     fi
-    $action $selection
+    eval "$action $note"
   done
 
   cd $current_dir
@@ -148,6 +160,13 @@ validate-yaml() {
   else
     return 1
   fi
+}
+
+cdp() {
+  local projects_dir=$HOME/Dev/HnB
+  [ -z "$1" ] && 1="."
+  local project=$(fd $1 $projects_dir -HI -t d -a -d 1 | cut -d'/' -f6 | fzf)
+  cd $projects_dir/$project
 }
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
