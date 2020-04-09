@@ -71,7 +71,7 @@ exec swayidle -w \
 # Apps
     default_border pixel
     for_window [class="[Cc]hromium"] inhibit_idle fullscreen
-    for_window [class="slack"] floating enable
+    for_window [class="Slack"] floating enable
     for_window [class="pavucontrol"] floating enable
     for_window [class="Simplenote"] floating enable
     for_window [app_id="guake"] floating enable, border none, move position 0 0

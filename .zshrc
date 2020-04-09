@@ -11,11 +11,12 @@ source /usr/share/fzf/completion.zsh
 #export GDK_BACKEND=wayland
 #export CLUTTER_BACKEND=wayland
 export XDG_CURRENT_DESKTOP=Unity
-#export AWS_VAULT_KEYCHAIN_NAME=login
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --bind=ctrl-o:accept'
+export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --bind=ctrl-o:accept --cycle"
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 export BATPAGER="less -RF"
-NOTES_PATH="$HOME/Documents/notes"
+NOTE_DIR="$HOME/Documents/notes"
+PASS_DIR="$HOME/.password-store"
+PROJECTS_DIR="$HOME/Dev/HnB"
 
 HISTSIZE=1000000
 SAVEHIST=1000000
@@ -42,6 +43,14 @@ alias glow="glow -p"
 alias cat="bat"
 
 ## hbi stuff
+
+cdp() {
+  local expression=${1:-'.'}
+  local project=$(fd $expression $PROJECTS_DIR -HI -t d -a -d 1 | rg -o '[^/]*$' | fzf)
+  [ -z "$project" ] && return 0
+  cd $PROJECTS_DIR/$project
+}
+
 hbi() {
   [ -z "$1" ] && echo "ENV not provided!" && return 1
   local env=$1
@@ -51,25 +60,22 @@ hbi() {
 }
 
 k9s() {
-  local env=$1
-  [ -z "$env" ] && env=$(printf "sandbox\ndev\nprod" | fzf)
+  local env=${1:-$(printf "sandbox\ndev\nprod" | fzf)}
   [ -z "$env" ] && return 0
   [ "$(kubectx -c )" != $env ] && kubectx $env
   hbi $env "/usr/bin/k9s"
 }
 
 tfinit() {
-  local env=$1
-  filepath=$(_get_filepath $env "backend.tfvars")
-  [ -z "$env" ] && env=$(_extract_env $filepath)
+  local filepath=$(_get_tf_filepath $1 "backend.tfvars") && echo Using: $filepath
+  local env=$(_get_tf_env $filepath $1)
   [ -z "$env" ] && return 0
   hbi $env terraform init --reconfigure --backend-config $filepath
 }
 
 tfplan() {
-  local env=$1
-  filepath=$(_get_filepath $env "terraform.tfvars")
-  [ -z "$env" ] && env=$(_extract_env $filepath)
+  local filepath=$(_get_tf_filepath $1 "terraform.tfvars") && echo Using: $filepath
+  local env=$(_get_tf_env $filepath $1)
   [ -z "$env" ] && return 0
   hbi $env terraform plan --var-file $filepath -out /tmp/plan.out
 }
@@ -78,22 +84,21 @@ tfapply() {
   hbi $1 terraform apply /tmp/plan.out
 }
 
-_get_filepath() {
+_get_tf_filepath() {
   echo $(fd . '../' | awk "/$1/ && /$2/" | fzf -1 -0)
 }
 
-_extract_env() {
-  echo $1 | cut -d'/' -f3
+_get_tf_env() {
+  echo ${2:-$(echo $1 | cut -d'/' -f3)}
 }
 
 ## pass store
 pass() {
   if [ "$#" -eq 0 ] || ([ "$#" -eq 1 ] && [[ "$1" == "-c" ]]); then
-    pass_dir=$HOME/.password-store/
-    dir_len=${#pass_dir}
-    selection=$(fd 'gpg' $pass_dir | cut -c "$((dir_len+1))"- | sed -e 's/\(.*\)\.gpg/\1/' | fzf)
+    local dir_len=${#PASS_DIR}
+    local selection=$(fd 'gpg' $PASS_DIR | cut -c "$((dir_len+1))"- | sed -e 's/\(.*\)\.gpg/\1/' | fzf)
     [ -z "$selection" ] && return 0
-    echo $selection && /bin/pass $1 $selection
+    echo Showing: $selection && /bin/pass $1 $selection
   else
     /bin/pass "$@"
   fi
@@ -105,7 +110,7 @@ note() {
   local current_dir=$(pwd)
   local action=$EDITOR
   local expression=""
-  cd $NOTES_PATH
+  cd $NOTE_DIR
 
   if [[ "$1" == "view" ]]; then
     action='glow'
@@ -160,13 +165,6 @@ validate-yaml() {
   else
     return 1
   fi
-}
-
-cdp() {
-  local projects_dir=$HOME/Dev/HnB
-  [ -z "$1" ] && 1="."
-  local project=$(fd $1 $projects_dir -HI -t d -a -d 1 | cut -d'/' -f6 | fzf)
-  cd $projects_dir/$project
 }
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
