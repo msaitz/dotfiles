@@ -12,6 +12,7 @@ source /usr/share/fzf/completion.zsh
 #export CLUTTER_BACKEND=wayland
 export XDG_CURRENT_DESKTOP=Unity
 export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --bind=ctrl-o:accept --cycle"
+export FZF_DEFAULT_COMMAND="rg --files --no-ignore-vcs --hidden"
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 export BATPAGER="less -RF"
 NOTE_DIR="$HOME/Documents/notes"
@@ -30,6 +31,10 @@ fi
 
 eval "$(pyenv init -)"
 
+alias so="source ~/.zshrc"
+alias zshrc="vim $HOME/.zshrc"
+alias vimrc="vim $HOME/.config/nvim/init.vim"
+alias gitconfig="vim $HOME/.gitconfig"
 alias open="xdg-open"
 alias suspend="systemctl suspend"
 alias hibernate="systemctl hibernate"
@@ -44,11 +49,17 @@ alias cat="bat"
 
 ## hbi stuff
 
-cdp() {
+pd() {
   local expression=${1:-'.'}
   local project=$(fd $expression $PROJECTS_DIR -HI -t d -a -d 1 | rg -o '[^/]*$' | fzf)
   [ -z "$project" ] && return 0
   cd $PROJECTS_DIR/$project
+}
+
+zd() {
+  local dir=$(z $1 -l | rg -v 'common' | rg -o '[^/]*$' | fzf)
+  [ -z "$dir" ] && return 0
+  z $dir
 }
 
 hbi() {
@@ -146,7 +157,7 @@ wifi() {
   elif [[ "$1" == "scan" ]]; then
     nmcli d w rescan
   else
-    local selection=$(nmcli --color yes d w l | fzf --ansi --inline-info --header-lines=1 --cycle | xargs)
+    local selection=$(nmcli --color yes d w l | fzf --ansi --inline-info --header-lines=1 | xargs)
     [ -z "$selection" ] && return 0
     local BSSID=$(echo $selection | cut -d' ' -f1)
     local SSID=$(echo $selection | cut -d' ' -f2)
@@ -168,3 +179,4 @@ validate-yaml() {
 }
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+[[ -r "/usr/share/z/z.sh" ]] && source /usr/share/z/z.sh

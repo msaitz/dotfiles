@@ -7,7 +7,7 @@ map <C-x> :NERDTreeToggle<CR>
 
 let g:airline_theme='one'
 "colorscheme one
-"set background=dark 
+"set background=dark
 colo delek
 
 call plug#begin()
@@ -46,6 +46,8 @@ nmap <leader>' :Marks<CR>
 nmap <leader>/ :Rg<CR>
 nmap <leader>H :Helptags!<CR>
 nmap <leader>C :Commands<CR>
+nmap <leader>c :Commits<CR>
+nmap <leader>cb :BCommits<CR>
 
 " Enable FZF Rg preview window
 command! -bang -nargs=* Rg
