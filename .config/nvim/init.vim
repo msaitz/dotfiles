@@ -1,36 +1,49 @@
 set tabstop=2 shiftwidth=2 expandtab autoindent number
 set mouse=ar mousemodel=extend
 set clipboard=unnamedplus
+set noshowmode
+set termguicolors
 syntax on
 filetype indent plugin on
-map <C-x> :NERDTreeToggle<CR>
 
-let g:airline_theme='one'
-"colorscheme one
-"set background=dark
-colo delek
+let g:terraform_align=1
+let g:terraform_fmt_on_save=1
+
+colorscheme onehalfdark
 
 call plug#begin()
-"Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --no-bash' }
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 Plug 'scrooloose/nerdTree'
+Plug 'junegunn/goyo.vim'
+Plug 'hashivim/vim-terraform'
+Plug 'itchyny/lightline.vim'
+Plug 'dense-analysis/ale'
+Plug 'sheerun/vim-polyglot'
+Plug 'ludovicchabant/vim-gutentags'
+Plug 'jiangmiao/auto-pairs'
+Plug 'mhinz/vim-signify'
+Plug 'terryma/vim-multiple-cursors'
+Plug 'vim-scripts/indentpython.vim'
+Plug 'tpope/vim-fugitive'
+
+" Themes
+Plug 'sonph/onehalf'
 Plug 'rakr/vim-one'
-"Plug 'neoclide/coc.nvim', {'tag': '*', 'do': { -> coc#util#install()}}
-"Plug 'tpope/vim-endwise'
-"Plug 'davidhalter/jedi'
-"Plug 'SirVer/ultisnips'
-"Plug 'honza/vim-snippets'
-"Plug 'deoplete-plugins/deoplete-jedi'
-"Plug 'terryma/vim-multiple-cursors'
 call plug#end()
 
-"fzf stuff
+" fzf stuff
 if has("nvim")
     " Escape inside a FZF terminal window should exit the terminal window
     " rather than going into the terminal's normal mode.
     autocmd FileType fzf tnoremap <buffer> <Esc> <Esc>
 endif
+
+" Enable FZF Rg preview window
+command! -bang -nargs=* Rg
+  \ call fzf#vim#grep(
+  \   'rg --column --line-number --no-heading --color=always --smart-case '.shellescape(<q-args>), 1,
+  \   fzf#vim#with_preview(), <bang>0)
 
 let mapleader = " "
 nmap <Leader><Space> :GFiles<CR>
@@ -48,10 +61,19 @@ nmap <leader>H :Helptags!<CR>
 nmap <leader>C :Commands<CR>
 nmap <leader>c :Commits<CR>
 nmap <leader>cb :BCommits<CR>
+nmap <leader>g :Goyo<CR>
+nmap <leader>w :w<CR>
+nmap <leader>wr :w !sudo tee % > /dev/null<CR>
+nmap <leader>q :q!<CR>
+map <C-x> :NERDTreeToggle<CR>
 
-" Enable FZF Rg preview window
-command! -bang -nargs=* Rg
-  \ call fzf#vim#grep(
-  \   'rg --column --line-number --no-heading --color=always --smart-case '.shellescape(<q-args>), 1,
-  \   fzf#vim#with_preview(), <bang>0)
-
+let g:lightline = {
+      \ 'colorscheme': 'jellybeans',
+      \ 'active': {
+      \   'left': [ [ 'mode', 'paste' ],
+      \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
+      \ },
+      \ 'component_function': {
+      \   'gitbranch': 'FugitiveHead'
+      \ },
+      \ }

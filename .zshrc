@@ -11,6 +11,7 @@ source /usr/share/fzf/completion.zsh
 #export GDK_BACKEND=wayland
 #export CLUTTER_BACKEND=wayland
 export XDG_CURRENT_DESKTOP=Unity
+export EDITOR='vim'
 export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --bind=ctrl-o:accept --cycle"
 export FZF_DEFAULT_COMMAND="rg --files --no-ignore-vcs --hidden"
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
@@ -18,16 +19,9 @@ export BATPAGER="less -RF"
 NOTE_DIR="$HOME/Documents/notes"
 PASS_DIR="$HOME/.password-store"
 PROJECTS_DIR="$HOME/Dev/HnB"
-
 HISTSIZE=1000000
 SAVEHIST=1000000
 setopt HIST_IGNORE_ALL_DUPS 
-
-if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='vim'
-else
-  export EDITOR='nvim'
-fi
 
 eval "$(pyenv init -)"
 
@@ -48,7 +42,6 @@ alias glow="glow -p"
 alias cat="bat"
 
 ## hbi stuff
-
 pd() {
   local expression=${1:-'.'}
   local project=$(fd $expression $PROJECTS_DIR -HI -t d -a -d 1 | rg -o '[^/]*$' | fzf)
