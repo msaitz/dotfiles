@@ -1,6 +1,6 @@
 
 export ZSH="$HOME/.oh-my-zsh"
-export PATH="$HOME/.tfenv/bin:$PATH"
+export PATH="$HOME/.tfenv/bin:$HOME/.local/bin::$PATH"
 ZSH_THEME="robbyrussell-mod"
 plugins=(git pass fd)
 
@@ -11,8 +11,9 @@ source /usr/share/fzf/completion.zsh
 #export GDK_BACKEND=wayland
 #export CLUTTER_BACKEND=wayland
 export XDG_CURRENT_DESKTOP=Unity
-export EDITOR='vim'
-export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --bind=ctrl-o:accept --cycle"
+export EDITOR='nvim'
+export FZF_DEFAULT_OPTS="--layout=reverse --bind=ctrl-o:accept --cycle"
+export FZF_CTRL_R_OPTS="--height 40%"
 export FZF_DEFAULT_COMMAND="rg --files --no-ignore-vcs --hidden"
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 export BATPAGER="less -RF"
@@ -29,6 +30,7 @@ alias so="source ~/.zshrc"
 alias zshrc="vim $HOME/.zshrc"
 alias vimrc="vim $HOME/.config/nvim/init.vim"
 alias gitconfig="vim $HOME/.gitconfig"
+alias yay="yay -Pw && yay"
 alias open="xdg-open"
 alias suspend="systemctl suspend"
 alias hibernate="systemctl hibernate"
@@ -42,19 +44,6 @@ alias glow="glow -p"
 alias cat="bat"
 
 ## hbi stuff
-pd() {
-  local expression=${1:-'.'}
-  local project=$(fd $expression $PROJECTS_DIR -HI -t d -a -d 1 | rg -o '[^/]*$' | fzf)
-  [ -z "$project" ] && return 0
-  cd $PROJECTS_DIR/$project
-}
-
-zd() {
-  local dir=$(z $1 -l | rg -v 'common' | rg -o '[^/]*$' | fzf)
-  [ -z "$dir" ] && return 0
-  z $dir
-}
-
 hbi() {
   [ -z "$1" ] && echo "ENV not provided!" && return 1
   local env=$1
@@ -84,12 +73,19 @@ tfplan() {
   hbi $env terraform plan --var-file $filepath -out /tmp/plan.out
 }
 
+tfdestroy() {
+  local filepath=$(_get_tf_filepath $1 "terraform.tfvars") && echo Using: $filepath
+  local env=$(_get_tf_env $filepath $1)
+  [ -z "$env" ] && return 0
+  hbi $env terraform destroy --var-file $filepath
+}
+
 tfapply() {
   hbi $1 terraform apply /tmp/plan.out
 }
 
 _get_tf_filepath() {
-  echo $(fd . '../' | awk "/$1/ && /$2/" | fzf -1 -0)
+  echo $(fd . '../' | awk "/$1/ && /$2/" | fzf -1 -0 --height 40%)
 }
 
 _get_tf_env() {
@@ -100,7 +96,7 @@ _get_tf_env() {
 pass() {
   if [ "$#" -eq 0 ] || ([ "$#" -eq 1 ] && [[ "$1" == "-c" ]]); then
     local dir_len=${#PASS_DIR}
-    local selection=$(fd 'gpg' $PASS_DIR | cut -c "$((dir_len+1))"- | sed -e 's/\(.*\)\.gpg/\1/' | fzf)
+    local selection=$(fd 'gpg' $PASS_DIR | cut -c "$((dir_len+1))"- | sed -e 's/\(.*\)\.gpg/\1/' | fzf --height 40%)
     [ -z "$selection" ] && return 0
     echo Showing: $selection && /bin/pass $1 $selection
   else
@@ -111,36 +107,31 @@ pass() {
 ## note taking
 note() {
   local preview_options="--preview-window=right:70%:wrap"
-  local current_dir=$(pwd)
-  local action=$EDITOR
+  local editor="$EDITOR -c 'Goyo'"
   local expression=""
-  cd $NOTE_DIR
 
-  if [[ "$1" == "view" ]]; then
-    action='glow'
-    [ -n "$2" ] && expression=$2 
-  elif [[ "$1" == "add" ]]; then
-    $action $2
+  if [[ "$1" == "new" ]]; then
+    local filename="$2.md"
+    eval "$editor $NOTE_DIR/$2.md"
   else
     expression=$1
   fi
 
   while true; do
-    local note=""
     if [ -z "$expression" ]; then
-      note=$(ls -t | fzf --preview="bat --color 'always' --decorations 'never' {}" $preview_options) || break
+      note=$(ls -t $NOTE_DIR | fzf --preview="bat --color 'always' --decorations 'never' $NOTE_DIR/{}" $preview_options) || break
     else
-      matches=$(rg --files-with-matches --no-messages --ignore-case "$expression" *)
+      matches=$(rg --files-with-matches --no-messages --ignore-case "$expression" $NOTE_DIR/* | rg -o '[^/]*$')
+
       if [ -z "$matches" ]; then
         echo "No matches!" && break
       else
-        note=$(echo $matches | fzf --preview "rg --ignore-case --pretty --context 10 $expression {}" $preview_options) || break
+        note=$(echo $matches | fzf --preview "rg --ignore-case --pretty --context 10 $expression $NOTE_DIR/{}" $preview_options) || break
       fi
     fi
-    eval "$action $note"
-  done
 
-  cd $current_dir
+    eval "$editor $NOTE_DIR/$note"
+  done
 }
 
 ## nmcli
@@ -169,6 +160,55 @@ validate-yaml() {
   else
     return 1
   fi
+}
+
+glogi() {
+  local out sha q
+  while out=$(
+      git log --graph --color=always \
+          --format="%C(auto)%h%d %s %C(black)%C(bold)%cr" "$@" |
+      fzf --ansi --multi --no-sort --query="$q" --print-query); do
+    q=$(head -1 <<< "$out")
+    while read sha; do
+      git show --color=always $sha | less -R
+    done < <(sed '1d;s/^[^a-z0-9]*//;/^$/d' <<< "$out" | awk '{print $1}')
+  done
+}
+
+pd() {
+  local expression=${1:-'.'}
+  local project=$(fd $expression $PROJECTS_DIR -HI -t d -a -d 1 | rg -o '[^/]*$' | fzf -0 --height 40%)
+  [ -z "$project" ] && return 0
+  cd $PROJECTS_DIR/$project
+}
+
+# fstash - easier way to deal with stashes
+# type fstash to get a list of your stashes
+# enter shows you the contents of the stash
+# ctrl-d shows a diff of the stash against your current HEAD
+# ctrl-b checks the stash out as a branch, for easier merging
+fstash() {
+  local out q k sha
+  while out=$(
+    git stash list --pretty="%C(yellow)%h %>(14)%Cgreen%cr %C(blue)%gs" |
+    fzf --ansi --no-sort --query="$q" --print-query \
+        --expect=ctrl-d,ctrl-b);
+  do
+    mapfile -t out <<< "$out"
+    q="${out[0]}"
+    k="${out[1]}"
+    sha="${out[-1]}"
+    sha="${sha%% *}"
+    [[ -z "$sha" ]] && continue
+    if [[ "$k" == 'ctrl-d' ]]; then
+      git diff $sha
+    elif [[ "$k" == 'ctrl-b' ]]; then
+      git stash branch "stash-$sha" $sha
+      break;
+    else
+      git stash show -p $sha
+    fi
+  done
 }
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
