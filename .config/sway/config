@@ -1,17 +1,16 @@
-#https://github.com/kaansenol5/dotfiles/blob/master/sway/config
-
 ### Config imports
 include /etc/sway/config.d/*
 
 ### Startup stuff
-#exec redshift
 exec guake
 exec ydotoold
+exec udiskie
+exec syncthing-gtk
 exec libinput-gestures-setup start
-#exec mako -c $HOME/.config/mako/config
+exec mako -c $HOME/.config/mako/config
+exec xrdb -load ~/.Xresources
 
 ## Variables
-
 set $mod Mod4
 set $left h
 set $down j
@@ -20,8 +19,8 @@ set $right l
 set $term alacritty
 set $menu wofi | xargs swaymsg exec --
 set $laptop eDP-1
-set $leftmon DP-2
-set $rightmon DP-3 
+set $leftmon "Dell Inc. DELL U2415 08DXD51N2EHL"
+set $rightmon "Dell Inc. DELL U2415 7MT0181D18UU" 
 
 # Output configuration
 output * bg $HOME/Pictures/Wall.jpg fill
@@ -40,117 +39,118 @@ exec swayidle -w \
 #  timeout 900 '[ $(acpi -a | grep off-line | wc -l) -gt 0 ] && systemctl suspend' 
 
 # Input
-   input "1267:12395:ELAN2301:00_04F3:306B_Touchpad" {
-       dwt enabled
-       tap enabled
-       natural_scroll disabled
-       middle_emulation enabled
-       pointer_accel 0.2 
-   }
-   
-   input "10007:20481:GTech_MI_wireless_mouse_Mouse" {
-      pointer_accel -0.3
-   }
-    
+input "1267:12395:ELAN2301:00_04F3:306B_Touchpad" {
+    dwt enabled
+    tap enabled
+    natural_scroll disabled
+    middle_emulation enabled
+    pointer_accel 0.3
+}
+
+input "10007:20481:GTech_MI_wireless_mouse_Mouse" {
+   pointer_accel -0.3
+}
+ 
 # Bindings
-    bindsym $mod+Return exec $term
-    bindsym $mod+q kill
-    bindsym $mod+d exec $menu
-    bindsym $mod+Space exec $menu
-    floating_modifier $mod normal
-    bindsym $mod+Shift+c reload
-    bindsym f1 exec /usr/bin/guake-toggle
-    bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit sway?' -b 'Yes, exit sway' 'swaymsg exit'
-    bindsym XF86MonBrightnessDown exec brightnessctl set 1%-
-    bindsym XF86MonBrightnessUp exec brightnessctl set +1% 
-    bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
-    bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
-    bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle 
-    bindsym --release Print exec grim -g "$(slurp)"
+bindsym $mod+Return exec $term
+bindsym $mod+q kill
+bindsym $mod+d exec $menu
+bindsym $mod+Space exec $menu
+floating_modifier $mod normal
+bindsym $mod+Shift+c reload
+bindsym f1 exec /usr/bin/guake-toggle
+bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit sway?' -b 'Yes, exit sway' 'swaymsg exit'
+bindsym XF86MonBrightnessDown exec brightnessctl set 1%-
+bindsym XF86MonBrightnessUp exec brightnessctl set +1% 
+bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle 
+bindsym --release Print exec grim -g "$(slurp)"
 
 # Apps
-    default_border pixel
-    for_window [class="[Cc]hromium"] inhibit_idle fullscreen
-    for_window [class="Slack"] floating enable
-    for_window [class="pavucontrol"] floating enable
-    for_window [class="Simplenote"] floating enable
-    for_window [app_id="guake"] floating enable, border none, move position 0 0
-    for_window [class="vlc"] floating enable, inhibit_idle open
-    for_window [app_id="^launcher$"] floating enable, border none
-    for_window [app_id="panel-right"] floating enable, resize set 500 200, move position 1420 0
+default_border pixel
+for_window [class="[Cc]hromium"] inhibit_idle fullscreen
+for_window [class="Slack"] floating enable
+for_window [class="[Kk]eybase*"] floating enable
+for_window [class="pritunl*"] floating enable
+for_window [class="pavucontrol"] floating enable
+for_window [app_id="guake"] floating enable, border none, move position 0 0
+for_window [class="vlc"] floating enable, inhibit_idle open
+for_window [app_id="^launcher$"] floating enable, border none
+for_window [app_id="panel-right"] floating enable, resize set 500 200, move position 1420 0
      
 # Moving around:
-    bindsym $mod+$left focus left
-    bindsym $mod+$down focus down
-    bindsym $mod+$up focus up
-    bindsym $mod+$right focus right
-    bindsym $mod+Left focus left
-    bindsym $mod+Down focus down
-    bindsym $mod+Up focus up
-    bindsym $mod+Right focus right
-    bindsym $mod+Shift+$left move left
-    bindsym $mod+Shift+$down move down
-    bindsym $mod+Shift+$up move up
-    bindsym $mod+Shift+$right move right
-    bindsym $mod+Shift+Left move left
-    bindsym $mod+Shift+Down move down
-    bindsym $mod+Shift+Up move up
+bindsym $mod+$left focus left
+bindsym $mod+$down focus down
+bindsym $mod+$up focus up
+bindsym $mod+$right focus right
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+bindsym $mod+Shift+$left move left
+bindsym $mod+Shift+$down move down
+bindsym $mod+Shift+$up move up
+bindsym $mod+Shift+$right move right
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
 
 # Workspaces:
-    bindsym $mod+1 workspace 1
-    bindsym $mod+2 workspace 2
-    bindsym $mod+3 workspace 3
-    bindsym $mod+4 workspace 4
-    bindsym $mod+5 workspace 5
-    bindsym $mod+6 workspace 6
-    bindsym $mod+7 workspace 7
-    bindsym $mod+8 workspace 8
-    bindsym $mod+9 workspace 9
-    bindsym $mod+0 workspace 10
+bindsym $mod+1 workspace 1
+bindsym $mod+2 workspace 2
+bindsym $mod+3 workspace 3
+bindsym $mod+4 workspace 4
+bindsym $mod+5 workspace 5
+bindsym $mod+6 workspace 6
+bindsym $mod+7 workspace 7
+bindsym $mod+8 workspace 8
+bindsym $mod+9 workspace 9
+bindsym $mod+0 workspace 10
 
-    bindsym $mod+Shift+1 move container to workspace 1
-    bindsym $mod+Shift+2 move container to workspace 2
-    bindsym $mod+Shift+3 move container to workspace 3
-    bindsym $mod+Shift+4 move container to workspace 4
-    bindsym $mod+Shift+5 move container to workspace 5
-    bindsym $mod+Shift+6 move container to workspace 6
-    bindsym $mod+Shift+7 move container to workspace 7
-    bindsym $mod+Shift+8 move container to workspace 8
-    bindsym $mod+Shift+9 move container to workspace 9
-    bindsym $mod+Shift+0 move container to workspace 10
+bindsym $mod+Shift+1 move container to workspace 1
+bindsym $mod+Shift+2 move container to workspace 2
+bindsym $mod+Shift+3 move container to workspace 3
+bindsym $mod+Shift+4 move container to workspace 4
+bindsym $mod+Shift+5 move container to workspace 5
+bindsym $mod+Shift+6 move container to workspace 6
+bindsym $mod+Shift+7 move container to workspace 7
+bindsym $mod+Shift+8 move container to workspace 8
+bindsym $mod+Shift+9 move container to workspace 9
+bindsym $mod+Shift+0 move container to workspace 10
 
-    bindsym $mod+Ctrl+Left workspace prev
-    bindsym $mod+Ctrl+Right workspace next
-    bindsym $mod+Ctrl+j workspace prev
-    bindsym $mod+Ctrl+semicolon workspace next
+bindsym $mod+Ctrl+Left workspace prev
+bindsym $mod+Ctrl+Right workspace next
+bindsym $mod+Ctrl+j workspace prev
+bindsym $mod+Ctrl+semicolon workspace next
 
-    workspace 1 output $leftmon
-    workspace 2 output $leftmon
-    workspace 3 output $leftmon
-    workspace 4 output $leftmon
-    workspace 5 output $leftmon
-    workspace 6 output $rightmon
-    workspace 7 output $rightmon
-    workspace 8 output $rightmon
-    workspace 9 output $rightmon
-    workspace 10 output $rightmon
+workspace 1 output $leftmon
+workspace 2 output $leftmon
+workspace 3 output $leftmon
+workspace 4 output $leftmon
+workspace 5 output $leftmon
+workspace 6 output $rightmon
+workspace 7 output $rightmon
+workspace 8 output $rightmon
+workspace 9 output $rightmon
+workspace 10 output $rightmon
 
 # Layout stuff:
-    bindsym $mod+b splith
-    bindsym $mod+v splitv
-    bindsym $mod+s layout stacking
-    bindsym $mod+w layout tabbed
-    bindsym $mod+e layout toggle split
-    bindsym $mod+f fullscreen
-    bindsym $mod+Shift+space floating toggle
-    bindsym $mod+Alt+Space focus mode_toggle
-    bindsym $mod+a focus parent
+bindsym $mod+b splith
+bindsym $mod+v splitv
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+bindsym $mod+f fullscreen
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+Alt+Space focus mode_toggle
+bindsym $mod+a focus parent
 
 # Scratchpad:
-    bindsym $mod+Shift+Tab move scratchpad
-    bindsym alt+Shift+Tab move scratchpad
-    bindsym $mod+Tab scratchpad show
-    bindsym alt+Tab scratchpad show
+bindsym $mod+Shift+Tab move scratchpad
+bindsym alt+Shift+Tab move scratchpad
+bindsym $mod+Tab scratchpad show
+bindsym alt+Tab scratchpad show
 
 # Resizing containers:
 mode "resize" {

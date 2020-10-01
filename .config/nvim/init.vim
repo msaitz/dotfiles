@@ -14,9 +14,7 @@ let g:terraform_align=1
 let g:terraform_fmt_on_save=1
 let g:vim_markdown_folding_disabled = 1
 let g:fzf_preview_window = 'right:60%'
-
-colorscheme onehalfdark
-
+let g:kite_tab_complete=1
 let g:lightline = {
       \ 'colorscheme': 'wombat',
       \ 'active': {
@@ -24,16 +22,23 @@ let g:lightline = {
       \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
       \ },
       \ 'component_function': {
-      \   'gitbranch': 'FugitiveHead'
+      \   'gitbranch': 'FugitiveHead',
+      \   'filename': 'RelativeFilepath'
       \ },
       \ }
 
+function! RelativeFilepath()
+  return expand('%:~:.')
+endfunction
+
+
+colorscheme onehalfdark
 
 """ Plugins
 call plug#begin()
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
-Plug 'scrooloose/nerdTree'
+"Plug 'scrooloose/nerdTree'
 Plug 'junegunn/goyo.vim'
 Plug 'hashivim/vim-terraform'
 Plug 'itchyny/lightline.vim'
@@ -45,6 +50,7 @@ Plug 'mhinz/vim-signify'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'vim-scripts/indentpython.vim'
 Plug 'tpope/vim-fugitive'
+Plug 'mhinz/vim-startify'
 "Plug 'neoclide/coc.nvim', {'tag': '*', 'do': { -> coc#util#install()}}
 
 """ Themes config
@@ -58,7 +64,6 @@ if has("nvim")
     autocmd FileType fzf tnoremap <buffer> <Esc> <Esc>
 endif
 
-
 """ Key bindings
 let mapleader = " "
 
@@ -71,8 +76,7 @@ nmap <leader>gt :SignifyToggle<CR>
 
 " fzf
 nmap <Leader><Space> :GFiles<CR>
-nmap <leader>f :GFiles<CR>
-nmap <leader>F :Files<CR>
+nmap <leader>f :Files<CR>
 nmap <leader>b :Buffers<CR>
 nmap <leader>h :History<CR>
 nmap <leader>t :BTags<CR>
